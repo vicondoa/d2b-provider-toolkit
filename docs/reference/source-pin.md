@@ -27,15 +27,24 @@ digest, all source-group fingerprints, and the distribution fingerprint.
 `d2b-provider-source verify`:
 
 1. accepts only the canonical repository and fingerprint policy;
-2. rejects unsafe inventory paths and non-regular files;
+2. rejects unsafe inventory paths, symbolic-link traversal, and non-regular
+   files;
 3. verifies the inventory snapshot digest;
-4. verifies the submodule revision when Git metadata exists;
+4. verifies the submodule revision and rejects dirty or untracked files when
+   Git metadata exists;
 5. verifies every selected file digest;
 6. recomputes each source-group fingerprint;
-7. recomputes the sorted-union distribution fingerprint.
+7. recomputes the sorted-union distribution fingerprint;
+8. enumerates each selected Cargo package's source, test, example, benchmark,
+   binary, proc-macro, custom-build, and local build-dependency inputs and
+   rejects any input omitted from the inventory.
 
 Release archives omit Git metadata, so file and domain-separated distribution
-digests remain the authority there.
+digests plus complete Cargo input enumeration remain the authority there.
+Canonical package manifests must set `package.build = false` when they have no
+build script. A package that uses a custom build script must inventory and hash
+that script; local path build dependencies must also be selected, fully
+inventoried canonical packages.
 
 ## Updating the pin
 
