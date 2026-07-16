@@ -112,6 +112,22 @@ expected_uri="${expected_uri//\?/%3F}"
 expected_uri="${expected_uri//é/%C3%A9}"
 test "$(cat "$capture")" = "$expected_uri"
 grep -Fx -- '--no-check-sigs' "$work/nix-args" >/dev/null
+glob_cwd="$work/malicious-filenames"
+mkdir -p "$glob_cwd"
+touch "$glob_cwd/not-a-trusted-user" "$glob_cwd/@not-a-real-group"
+(
+  cd "$glob_cwd"
+  PATH="$fake_bin:$PATH" NIX_ARGS_CAPTURE="$capture" \
+    NIX_ALL_ARGS="$work/nix-args-wildcard" FAKE_TRUSTED_USERS='*' \
+    "$import_bundle/import.sh" >/dev/null
+)
+(
+  cd "$glob_cwd"
+  PATH="$fake_bin:$PATH" NIX_ARGS_CAPTURE="$capture" \
+    NIX_ALL_ARGS="$work/nix-args-group" \
+    FAKE_TRUSTED_USERS="@$(id -gn)" \
+    "$import_bundle/import.sh" >/dev/null
+)
 if ((EUID != 0)) &&
   PATH="$fake_bin:$PATH" NIX_ARGS_CAPTURE="$capture" \
     NIX_ALL_ARGS="$work/nix-args-untrusted" FAKE_TRUSTED_USERS=root \
@@ -119,6 +135,21 @@ if ((EUID != 0)) &&
 then
   echo "release packaging test: untrusted Nix user was accepted" >&2
   exit 1
+fi
+if ((EUID != 0)); then
+  current_user="$(id -un)"
+  malicious_pattern="${current_user%?}?"
+  touch "$glob_cwd/$current_user"
+  if (
+    cd "$glob_cwd"
+    PATH="$fake_bin:$PATH" NIX_ARGS_CAPTURE="$capture" \
+      NIX_ALL_ARGS="$work/nix-args-malicious" \
+      FAKE_TRUSTED_USERS="$malicious_pattern" \
+      "$import_bundle/import.sh" >/dev/null 2>&1
+  ); then
+    echo "release packaging test: filename changed trusted-user parsing" >&2
+    exit 1
+  fi
 fi
 if grep -E '\beval\b' "$ROOT/scripts/import-nix-closure.sh"; then
   echo "release packaging test: importer must not use eval" >&2

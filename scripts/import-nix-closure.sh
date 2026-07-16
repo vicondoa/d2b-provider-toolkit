@@ -25,8 +25,8 @@ percent_encode_path() {
 }
 
 is_trusted_nix_user() {
-  local current_user group principal trusted_users
-  local -a current_groups
+  local current_user group member principal trusted_users
+  local -a current_groups trusted_principals
 
   if ((EUID == 0)); then
     return 0
@@ -38,16 +38,17 @@ is_trusted_nix_user() {
     nix --extra-experimental-features nix-command \
       config show trusted-users 2>/dev/null
   )"
+  read -r -a trusted_principals <<<"$trusted_users"
 
-  for principal in $trusted_users; do
+  for principal in "${trusted_principals[@]}"; do
     case "$principal" in
       "*"|"$current_user")
         return 0
         ;;
       @*)
         group="${principal#@}"
-        for principal in "${current_groups[@]}"; do
-          if [[ "$principal" == "$group" ]]; then
+        for member in "${current_groups[@]}"; do
+          if [[ "$member" == "$group" ]]; then
             return 0
           fi
         done

@@ -22,5 +22,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
   import script instead of a misleading standalone Linux `bin`/`share` archive.
 - The closure importer now handles unsigned-cache trust explicitly and safely
   imports from extraction paths containing URI delimiters or non-ASCII bytes.
+- Trusted Nix users are parsed without pathname expansion, including wildcard,
+  group, and exact-user principals.
 
 [Unreleased]: https://github.com/vicondoa/d2b-provider-toolkit/compare/v0.1.0...HEAD
