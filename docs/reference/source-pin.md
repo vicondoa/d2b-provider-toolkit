@@ -35,16 +35,16 @@ digest, all source-group fingerprints, and the distribution fingerprint.
 5. verifies every selected file digest;
 6. recomputes each source-group fingerprint;
 7. recomputes the sorted-union distribution fingerprint;
-8. enumerates each selected Cargo package's source, test, example, benchmark,
-   binary, proc-macro, custom-build, and local build-dependency inputs and
-   rejects any input omitted from the inventory.
+8. enumerates each selected Cargo package's implicit library, binary, example,
+   benchmark, proc-macro, custom-build, explicit target, and local
+   build-dependency inputs and rejects any input omitted from the inventory.
 
 Release archives omit Git metadata, so file and domain-separated distribution
 digests plus complete Cargo input enumeration remain the authority there.
-Canonical package manifests must set `package.build = false` when they have no
-build script. A package that uses a custom build script must inventory and hash
-that script; local path build dependencies must also be selected, fully
-inventoried canonical packages.
+An omitted `package.build` is accepted only when enumeration proves that the
+package root has no `build.rs`. A package that uses a custom build script must
+inventory and hash that script; local path build dependencies must also be
+selected, fully inventoried canonical packages.
 
 ## Updating the pin
 

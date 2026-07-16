@@ -404,23 +404,11 @@ fn verify_cargo_build_inputs<'a>(
         let default_build_script = format!("{package_dir}/build.rs");
         let default_build_exists = path_exists_without_symlink(source, &default_build_script)?;
         match &audit.build {
-            Some(BuildSetting::Disabled) => {
-                if default_build_exists {
-                    require_in_inventory(&inventory, &default_build_script, manifest)?;
-                }
-            }
+            Some(BuildSetting::Disabled) | None => {}
             Some(BuildSetting::Path(path)) => {
                 let input = package_relative_path(package_dir, path, manifest)?;
                 require_in_inventory(&inventory, &input, manifest)?;
                 read_rooted_regular_file(source, &input)?;
-            }
-            None if default_build_exists => {
-                require_in_inventory(&inventory, &default_build_script, manifest)?;
-            }
-            None => {
-                return Err(format!(
-                    "{manifest} must set package.build = false when build.rs is absent"
-                ));
             }
         }
 
@@ -443,7 +431,15 @@ fn verify_cargo_build_inputs<'a>(
         if default_build_exists {
             require_in_inventory(&inventory, &default_build_script, manifest)?;
         }
-        for directory in ["src", "tests", "examples", "benches"] {
+        for input in [
+            format!("{package_dir}/src/lib.rs"),
+            format!("{package_dir}/src/main.rs"),
+        ] {
+            if path_exists_without_symlink(source, &input)? {
+                require_in_inventory(&inventory, &input, manifest)?;
+            }
+        }
+        for directory in ["src/bin", "examples", "benches"] {
             let relative = format!("{package_dir}/{directory}");
             collect_cargo_input_files(source, &relative, &inventory, manifest)?;
         }
@@ -891,6 +887,21 @@ mod tests {
     }
 
     #[test]
+    fn clean_archive_with_verified_absent_build_script_is_accepted() {
+        let fixture = Fixture::new("[package]\nname = \"example\"\n", &[]);
+        assert!(fixture.verify().is_ok());
+    }
+
+    #[test]
+    fn incomplete_archive_is_rejected() {
+        let fixture = Fixture::new("[package]\nname = \"example\"\n", &[]);
+        fs::remove_file(fixture.source.join("packages/example/src/lib.rs"))
+            .expect("remove inventoried source");
+        let error = fixture.verify().expect_err("incomplete archive must fail");
+        assert!(error.contains("cannot inspect"), "{error}");
+    }
+
+    #[test]
     fn git_checkout_rejects_untracked_and_dirty_files() {
         let untracked = Fixture::new("[package]\nname = \"example\"\nbuild = false\n", &[]);
         untracked.init_git();
@@ -938,12 +949,9 @@ mod tests {
     }
 
     #[test]
-    fn archive_requires_build_false_or_an_inventoried_build_script() {
+    fn archive_accepts_absent_or_inventoried_build_script() {
         let absent = Fixture::new("[package]\nname = \"example\"\n", &[]);
-        let error = absent
-            .verify()
-            .expect_err("implicit absent build script must fail");
-        assert!(error.contains("package.build = false"), "{error}");
+        assert!(absent.verify().is_ok());
 
         let present = Fixture::new(
             "[package]\nname = \"example\"\n",
