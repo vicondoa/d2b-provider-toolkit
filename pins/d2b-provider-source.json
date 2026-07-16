@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/vicondoa/d2b",
+  "sourceRevision": "9183b45c6505cfd496e5d537bf6376f884fb16c7",
+  "inventoryRevision": "b1f2c13a196004f5a0fb999808d691b0668cf226",
+  "inventorySha256": "a582fccdc9c048efaa5cc1a9cd6ceb26381d9a965dc0cb0165952c4e61151c92",
+  "distributionId": "d2b-provider-toolkit",
+  "distributionFingerprint": "10f4f1c06de0b23afe2c96702c494782065ee2bd8fd96ab95d578fcd640c0b1e",
+  "sourceGroups": {
+    "workspace-manifest": "5bdcccc3f279bb763208c0afdd4e6cd9de04417744343ba261c0d5888994b6af",
+    "contracts-v2": "3fb32344f16050f481c2883383e40515e60285d6ea57280eab99dbe053bd793c",
+    "session-runtime": "375fbf89c82ee939cc12f15cad9847fcfac5876219bbd6555ea7f2f7f990aa70",
+    "provider-runtime": "1da6e77b92462d041e1bf4da34d09cd5d1cfdffb823c220a183c162b60ae6758",
+    "provider-toolkit": "98ae6229a5b07056f52d64d1c03b3fa0b19ce4f0618795b8b2a32793a0ac810e",
+    "public-contract-artifacts": "628d9caf75e21f35ef54f93ca2486622604144b2d3c4417e1477f4f91d7036ad"
+  }
+}

@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - uses: cachix/install-nix-action@v31
+      - name: Verify release version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          version="$(cargo metadata --no-deps --format-version 1 |
+            jq -r '.packages[] | select(.name == "d2b-provider-sdk") | .version')"
+          test "$RELEASE_TAG" = "v$version"
+      - name: Validate release tree
+        run: nix flake check --print-build-logs
+      - name: Build release artifacts
+        run: |
+          nix build .#sourceArchive --out-link result-source
+          nix build .#d2b-provider-toolkit --out-link result-toolkit
+          mkdir -p dist
+          cp result-source/*.tar.gz dist/
+          tar -C result-toolkit -czf \
+            "dist/d2b-provider-toolkit-${GITHUB_REF_NAME#v}-x86_64-linux.tar.gz" \
+            bin share
+          (cd dist && sha256sum ./*.tar.gz > SHA256SUMS)
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --verify-tag \
+            --generate-notes \
+            dist/*.tar.gz \
+            dist/SHA256SUMS

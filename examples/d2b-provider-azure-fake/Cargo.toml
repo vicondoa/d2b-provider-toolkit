@@ -1,0 +1,19 @@
+[package]
+name = "d2b-provider-azure-fake"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Zero-work fake Azure provider SDK example"
+publish = false
+
+[features]
+default = []
+
+[dependencies]
+d2b-provider-sdk.workspace = true
+tokio = { workspace = true, features = ["macros", "rt"] }
+
+[lints]
+workspace = true

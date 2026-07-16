@@ -1,0 +1,16 @@
+[package]
+name = "d2b-provider-conformance"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Canonical provider SDK distribution conformance entrypoint"
+publish = false
+
+[dependencies]
+d2b-provider-sdk.workspace = true
+tokio = { workspace = true, features = ["macros", "rt"] }
+
+[lints]
+workspace = true

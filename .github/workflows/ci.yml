@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Select pinned Rust toolchain
+        run: rustup show
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Lint
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Test
+        run: cargo test --workspace --all-targets --all-features
+      - name: Check distribution policy
+        run: bash scripts/check-distribution-policy.sh
+      - name: Verify canonical source
+        run: cargo run --quiet -p d2b-provider-source -- verify
+      - name: Run conformance entrypoints
+        run: |
+          cargo run --quiet -p d2b-provider-conformance -- self-test
+          cargo run --quiet -p d2b-provider-azure-fake
+
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: Check flake
+        run: nix flake check --print-build-logs

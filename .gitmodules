@@ -1,0 +1,3 @@
+[submodule "canonical/d2b"]
+	path = canonical/d2b
+	url = https://github.com/vicondoa/d2b.git
