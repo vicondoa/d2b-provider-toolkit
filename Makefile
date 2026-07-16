@@ -1,6 +1,6 @@
-.PHONY: check clippy conformance flake fmt policy source test
+.PHONY: check clippy conformance flake fmt policy release-test source test
 
-check: fmt clippy test policy source conformance flake
+check: fmt clippy test policy source conformance release-test flake
 
 fmt:
 	cargo fmt --all -- --check
@@ -20,6 +20,9 @@ source:
 conformance:
 	cargo run --quiet -p d2b-provider-conformance -- self-test
 	cargo run --quiet -p d2b-provider-azure-fake
+
+release-test:
+	bash tests/release-packaging.sh
 
 flake:
 	nix flake check --print-build-logs

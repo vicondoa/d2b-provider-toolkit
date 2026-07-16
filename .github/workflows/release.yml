@@ -34,12 +34,10 @@ jobs:
         run: |
           nix build .#sourceArchive --out-link result-source
           nix build .#d2b-provider-toolkit --out-link result-toolkit
-          mkdir -p dist
-          cp result-source/*.tar.gz dist/
-          tar -C result-toolkit -czf \
-            "dist/d2b-provider-toolkit-${GITHUB_REF_NAME#v}-x86_64-linux.tar.gz" \
-            bin share
-          (cd dist && sha256sum ./*.tar.gz > SHA256SUMS)
+          bash scripts/build-release-artifacts.sh \
+            result-toolkit result-source dist
+      - name: Verify release artifacts
+        run: bash scripts/check-release-artifacts.sh dist
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

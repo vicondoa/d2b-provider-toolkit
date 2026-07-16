@@ -35,4 +35,5 @@ make check
 ```
 
 Release tags are `v<workspace-version>`. Release automation creates source and
-x86_64-linux archives with checksums; it never publishes to a crate registry.
+x86_64-linux Nix-closure archives with checksums; it never publishes standalone
+Linux binaries or publishes to a crate registry.

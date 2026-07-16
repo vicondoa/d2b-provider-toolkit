@@ -29,13 +29,19 @@ Azure SDK, credential, or live network dependency.
   verification;
 - `templates/d2b-provider-template`: a compiling, fail-closed provider scaffold;
 - `examples/d2b-provider-azure-fake`: zero-work fake SDK example;
-- Nix packages for the binaries, canonical contract docs, and a reproducible
-  source archive.
+- Nix packages for the binaries, canonical contract docs, a reproducible source
+  archive, and an x86_64-linux Nix closure bundle.
 
 There are no copied wire DTOs, protobuf definitions, identifier types, frame
 codecs, redaction implementations, or fake-provider internals. The canonical
 crates remain `publish = false`; this distribution is delivered through GitHub
 release source artifacts and flake/path dependencies only.
+
+Release binaries are not standalone Linux executables: their ELF interpreter
+and shared-library search paths are in `/nix/store`. The binary release asset is
+therefore explicitly Nix-only and contains a complete binary-cache closure plus
+an import script. See
+[Release artifacts](docs/reference/release-artifacts.md).
 
 ## Get started
 
@@ -82,6 +88,7 @@ See:
 - [SDK surface](docs/reference/sdk-surface.md)
 - [Conformance contract](docs/reference/conformance.md)
 - [Source pin and drift policy](docs/reference/source-pin.md)
+- [Release artifacts](docs/reference/release-artifacts.md)
 - [Authority, placement, and leases](docs/explanation/authority-placement-and-leases.md)
 - [Redaction boundary](docs/explanation/redaction-boundary.md)
 - [Deferred bootstrap](docs/explanation/provider-agent-bootstrap.md)

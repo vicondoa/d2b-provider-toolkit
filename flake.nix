@@ -90,12 +90,39 @@
             mkdir -p "$out/share/d2b-provider-toolkit"
             cp -R ${self}/contract/docs "$out/share/d2b-provider-toolkit/"
           '';
+          releasePackagingCheck = pkgs.runCommand "d2b-provider-release-packaging-check" {
+            nativeBuildInputs = [
+              pkgs.bash
+              pkgs.binutils
+              pkgs.coreutils
+              pkgs.gawk
+              pkgs.gnugrep
+              pkgs.gnutar
+              pkgs.gzip
+            ];
+          } ''
+            for binary in ${toolkit}/bin/*; do
+              interpreter="$(
+                readelf --program-headers "$binary" |
+                  sed -n 's/.*Requesting program interpreter: \(.*\)]/\1/p'
+              )"
+              case "$interpreter" in
+                /nix/store/*) ;;
+                *) exit 1 ;;
+              esac
+              readelf --dynamic "$binary" | grep -F '(NEEDED)' >/dev/null
+              readelf --dynamic "$binary" |
+                grep -E '\((RUNPATH|RPATH)\).*/nix/store/' >/dev/null
+            done
+            touch "$out"
+          '';
         in
         {
           default = toolkit;
           d2b-provider-toolkit = toolkit;
           sourceArchive = sourceArchive;
           contractDocs = contractDocs;
+          releasePackagingCheck = releasePackagingCheck;
         }
       );
 
@@ -108,6 +135,7 @@
           rust = packages.d2b-provider-toolkit;
           source-archive = packages.sourceArchive;
           contract-docs = packages.contractDocs;
+          release-packaging = packages.releasePackagingCheck;
         }
       );
 
