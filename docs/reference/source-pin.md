@@ -4,8 +4,8 @@ The provider distribution has two immutable provenance points:
 
 | Purpose | Revision |
 | --- | --- |
-| Canonical d2b source | `9183b45c6505cfd496e5d537bf6376f884fb16c7` |
-| Source inventory and public contract artifacts | `b1f2c13a196004f5a0fb999808d691b0668cf226` |
+| Canonical d2b source | `7e94327951d30913a1a6e0e7a47d4a24b462deff` |
+| Source inventory and public contract artifacts | `d5a913922eb019ed83a16e4e64f562303b31ecf7` |
 
 The inventory confirms that the selected canonical code groups are
 byte-identical at the source revision. Public contract artifacts are retained
@@ -14,7 +14,7 @@ domain-separated inventory produce:
 
 ```text
 d2b-provider-toolkit
-10f4f1c06de0b23afe2c96702c494782065ee2bd8fd96ab95d578fcd640c0b1e
+75bebbafe99d2ba65e5ce80bc44e644b5d073b7045d5058cbb0fb1f4c539a8f6
 ```
 
 `pins/d2b-provider-source.json` records both revisions, the inventory snapshot
@@ -35,16 +35,17 @@ digest, all source-group fingerprints, and the distribution fingerprint.
 5. verifies every selected file digest;
 6. recomputes each source-group fingerprint;
 7. recomputes the sorted-union distribution fingerprint;
-8. enumerates each selected Cargo package's implicit library, binary, example,
-   benchmark, proc-macro, custom-build, explicit target, and local
-   build-dependency inputs and rejects any input omitted from the inventory.
+8. enumerates every file below each selected Cargo package root, including
+   libraries, binaries, examples, tests, fixtures, protobuf inputs,
+   feature-gated modules, custom builds, and local build dependencies, and
+   rejects any input omitted from the inventory.
 
 Release archives omit Git metadata, so file and domain-separated distribution
-digests plus complete Cargo input enumeration remain the authority there.
-An omitted `package.build` is accepted only when enumeration proves that the
-package root has no `build.rs`. A package that uses a custom build script must
-inventory and hash that script; local path build dependencies must also be
-selected, fully inventoried canonical packages.
+digests plus complete package-source enumeration remain the authority there.
+When `package.build` is omitted and no default `build.rs` exists, complete
+package enumeration proves that absence. Every default or explicitly selected
+custom build script must be inventoried and hashed; local path build
+dependencies must also be selected, fully inventoried canonical packages.
 
 ## Updating the pin
 

@@ -401,8 +401,6 @@ fn verify_cargo_build_inputs<'a>(
         let bytes = read_rooted_regular_file(source, manifest)?;
         let audit = parse_manifest(manifest, &bytes)?;
 
-        let default_build_script = format!("{package_dir}/build.rs");
-        let default_build_exists = path_exists_without_symlink(source, &default_build_script)?;
         match &audit.build {
             Some(BuildSetting::Disabled) | None => {}
             Some(BuildSetting::Path(path)) => {
@@ -428,21 +426,7 @@ fn verify_cargo_build_inputs<'a>(
             }
         }
 
-        if default_build_exists {
-            require_in_inventory(&inventory, &default_build_script, manifest)?;
-        }
-        for input in [
-            format!("{package_dir}/src/lib.rs"),
-            format!("{package_dir}/src/main.rs"),
-        ] {
-            if path_exists_without_symlink(source, &input)? {
-                require_in_inventory(&inventory, &input, manifest)?;
-            }
-        }
-        for directory in ["src/bin", "examples", "benches"] {
-            let relative = format!("{package_dir}/{directory}");
-            collect_cargo_input_files(source, &relative, &inventory, manifest)?;
-        }
+        collect_cargo_input_files(source, package_dir, &inventory, manifest)?;
     }
     Ok(())
 }
@@ -574,18 +558,6 @@ fn package_relative_path(package_dir: &str, relative: &str, label: &str) -> Resu
         }
     }
     Ok(components.join("/"))
-}
-
-fn path_exists_without_symlink(source: &Path, relative: &str) -> Result<bool, String> {
-    let path = source.join(relative);
-    match fs::symlink_metadata(&path) {
-        Ok(metadata) if metadata.file_type().is_symlink() => {
-            Err(format!("{relative} is a symbolic link"))
-        }
-        Ok(metadata) => Ok(metadata.file_type().is_file()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
-        Err(error) => Err(format!("cannot inspect {relative}: {error}")),
-    }
 }
 
 fn require_in_inventory(
@@ -920,32 +892,29 @@ mod tests {
     }
 
     #[test]
-    fn archive_rejects_unlisted_build_script_binary_and_example() {
-        let build_script = Fixture::new("[package]\nname = \"example\"\nbuild = false\n", &[]);
-        write_file(
-            &build_script.source.join("packages/example/build.rs"),
-            b"fn main() {}\n",
-        );
-        let error = build_script
-            .verify()
-            .expect_err("unlisted build script must fail");
-        assert!(error.contains("unlisted Cargo build input"), "{error}");
-
-        let binary = Fixture::new("[package]\nname = \"example\"\nbuild = false\n", &[]);
-        write_file(
-            &binary.source.join("packages/example/src/bin/escape.rs"),
-            b"fn main() {}\n",
-        );
-        let error = binary.verify().expect_err("unlisted binary must fail");
-        assert!(error.contains("unlisted Cargo build input"), "{error}");
-
-        let example = Fixture::new("[package]\nname = \"example\"\nbuild = false\n", &[]);
-        write_file(
-            &example.source.join("packages/example/examples/escape.rs"),
-            b"fn main() {}\n",
-        );
-        let error = example.verify().expect_err("unlisted example must fail");
-        assert!(error.contains("unlisted Cargo build input"), "{error}");
+    fn archive_rejects_every_unlisted_package_file() {
+        for (path, contents) in [
+            ("build.rs", "fn main() {}\n"),
+            ("src/escape.rs", "pub fn escape() {}\n"),
+            ("src/bin/escape.rs", "fn main() {}\n"),
+            ("examples/escape.rs", "fn main() {}\n"),
+            ("tests/escape.rs", "#[test]\nfn escape() {}\n"),
+            ("fixtures/escape.json", "{}\n"),
+            ("proto/escape.proto", "syntax = \"proto3\";\n"),
+        ] {
+            let fixture = Fixture::new("[package]\nname = \"example\"\nbuild = false\n", &[]);
+            write_file(
+                &fixture.source.join("packages/example").join(path),
+                contents.as_bytes(),
+            );
+            let error = fixture
+                .verify()
+                .expect_err("unlisted package file must fail");
+            assert!(
+                error.contains("unlisted Cargo build input"),
+                "{path}: {error}"
+            );
+        }
     }
 
     #[test]

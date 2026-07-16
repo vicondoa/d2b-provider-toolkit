@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     d2b = {
-      url = "github:vicondoa/d2b/9183b45c6505cfd496e5d537bf6376f884fb16c7";
+      url = "github:vicondoa/d2b/7e94327951d30913a1a6e0e7a47d4a24b462deff";
       flake = false;
     };
   };
@@ -54,7 +54,10 @@
               "--workspace"
               "--all-targets"
             ];
-            nativeCheckInputs = [ pkgs.jq ];
+            nativeCheckInputs = [
+              pkgs.git
+              pkgs.jq
+            ];
             postCheck = ''
               bash scripts/check-distribution-policy.sh
               cargo run --offline --quiet -p d2b-provider-source -- verify

@@ -18,6 +18,9 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Source verification now consumes the package-complete canonical inventory,
+  pins the coordination-approved d2b revision, and rejects every unlisted file
+  below a selected Cargo package root.
 - Release binaries now ship as a checksummed, complete Nix closure with an
   import script instead of a misleading standalone Linux `bin`/`share` archive.
 - The closure importer now handles unsigned-cache trust explicitly and safely

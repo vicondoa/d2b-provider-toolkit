@@ -3,17 +3,17 @@
     "d2b": {
       "flake": false,
       "locked": {
-        "lastModified": 1784184257,
-        "narHash": "sha256-/9uWTwP4wTSz5L3/+qfK4/96NHDhy61Pjg5YdeIlYCw=",
+        "lastModified": 1784181052,
+        "narHash": "sha256-w5BQevSV+fMtSbfr5dLNZ3vvV45ZZGvdzA1Hx9zpn1A=",
         "owner": "vicondoa",
         "repo": "d2b",
-        "rev": "9183b45c6505cfd496e5d537bf6376f884fb16c7",
+        "rev": "7e94327951d30913a1a6e0e7a47d4a24b462deff",
         "type": "github"
       },
       "original": {
         "owner": "vicondoa",
         "repo": "d2b",
-        "rev": "9183b45c6505cfd496e5d537bf6376f884fb16c7",
+        "rev": "7e94327951d30913a1a6e0e7a47d4a24b462deff",
         "type": "github"
       }
     },
