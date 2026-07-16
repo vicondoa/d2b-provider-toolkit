@@ -45,8 +45,14 @@ release checksums, unpack it, and run its `import.sh`:
 ```console
 sha256sum --check SHA256SUMS
 tar -xzf d2b-provider-toolkit-0.1.0-x86_64-linux-nix-closure.tar.gz
-./d2b-provider-toolkit-0.1.0-x86_64-linux-nix-closure/import.sh
+sudo ./d2b-provider-toolkit-0.1.0-x86_64-linux-nix-closure/import.sh
 ```
 
-The importer requires Nix with the `nix-command` feature. It copies the complete
-closure into the local Nix store and prints the imported toolkit store path.
+The cache is unsigned because there is no release signing key. The importer
+requires Nix with the `nix-command` feature and must run as root or a user in
+Nix's `trusted-users`; it explicitly uses `--no-check-sigs`. Verify
+`SHA256SUMS` first using the copy from the official GitHub release over
+authenticated HTTPS. This detects corruption but, because the checksum ships on
+the same unsigned release channel, does not defend against compromise of that
+channel. Nix still verifies the content-addressed NAR hashes while the importer
+copies the complete closure and prints its toolkit store path.

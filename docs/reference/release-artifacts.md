@@ -26,7 +26,22 @@ library declaration, and runpath; checks that every closure manifest path has a
 matching binary-cache record; validates archive layout; and verifies all
 release checksums.
 
-Consumers must have Nix with `nix-command` enabled. After checking
-`SHA256SUMS`, unpack the archive and run `import.sh`. The script prints the
+The file cache is intentionally unsigned: this repository has no secure release
+signing key. Nix therefore rejects it under default signature policy. The
+importer requires root or a user named by Nix's `trusted-users` setting and uses
+`--no-check-sigs` explicitly. It does not weaken daemon policy for untrusted
+users.
+
+Download both the archive and `SHA256SUMS` from the official GitHub release over
+authenticated HTTPS, then run `sha256sum --check SHA256SUMS` before extraction.
+The checksum detects corruption and binds the archive to that release metadata;
+because it is distributed on the same unsigned release channel, it does not
+protect against compromise of that channel or repository. Nix's NAR hashes
+still verify the imported closure contents.
+
+Consumers must have Nix with `nix-command` enabled. After checksum verification,
+unpack the archive and run `import.sh` as root or a trusted Nix user. The
+importer percent-encodes its absolute cache path before constructing the
+`file://` URI, including non-ASCII bytes and URI delimiters. It prints the
 toolkit store path; binaries are under its `bin` directory. No non-Nix runtime
 support is claimed.

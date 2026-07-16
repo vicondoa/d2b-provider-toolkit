@@ -69,4 +69,60 @@ if bash "$ROOT/scripts/check-release-artifacts.sh" "$dist" >/dev/null 2>&1; then
   exit 1
 fi
 
+extract_dir="$work/extracted path #? café"
+import_bundle="$extract_dir/$top"
+fake_bin="$work/fake-bin"
+capture="$work/cache-uri"
+mkdir -p "$import_bundle/cache" "$fake_bin"
+cp "$ROOT/scripts/import-nix-closure.sh" "$import_bundle/import.sh"
+printf '%s\n' "$store_path" >"$import_bundle/ROOT_PATH"
+cat >"$fake_bin/nix" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+case " $* " in
+  *" config show trusted-users "*)
+    printf '%s\n' "${FAKE_TRUSTED_USERS:-$(id -un)}"
+    exit 0
+    ;;
+esac
+
+printf '%s\n' "$@" >"$NIX_ALL_ARGS"
+previous=""
+for argument in "$@"; do
+  if [[ "$previous" == "--from" ]]; then
+    printf '%s' "$argument" >"$NIX_ARGS_CAPTURE"
+    exit 0
+  fi
+  previous="$argument"
+done
+exit 1
+EOF
+cat >"$fake_bin/nix-store" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+chmod 0755 "$fake_bin/nix" "$fake_bin/nix-store"
+PATH="$fake_bin:$PATH" NIX_ARGS_CAPTURE="$capture" \
+  NIX_ALL_ARGS="$work/nix-args" \
+  "$import_bundle/import.sh" >/dev/null
+expected_uri="file://${import_bundle// /%20}/cache"
+expected_uri="${expected_uri//#/%23}"
+expected_uri="${expected_uri//\?/%3F}"
+expected_uri="${expected_uri//é/%C3%A9}"
+test "$(cat "$capture")" = "$expected_uri"
+grep -Fx -- '--no-check-sigs' "$work/nix-args" >/dev/null
+if ((EUID != 0)) &&
+  PATH="$fake_bin:$PATH" NIX_ARGS_CAPTURE="$capture" \
+    NIX_ALL_ARGS="$work/nix-args-untrusted" FAKE_TRUSTED_USERS=root \
+    "$import_bundle/import.sh" >/dev/null 2>&1
+then
+  echo "release packaging test: untrusted Nix user was accepted" >&2
+  exit 1
+fi
+if grep -E '\beval\b' "$ROOT/scripts/import-nix-closure.sh"; then
+  echo "release packaging test: importer must not use eval" >&2
+  exit 1
+fi
+
 echo "release packaging tests: ok"
