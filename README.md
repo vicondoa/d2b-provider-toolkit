@@ -7,9 +7,9 @@ packaging without becoming a second protocol owner.
 ## Status
 
 The SDK is pinned to canonical `vicondoa/d2b` revision
-`7e94327951d30913a1a6e0e7a47d4a24b462deff`. The complete provider distribution
+`4018d9c9652bd826c2e6a9abccdcdcafb832d944`. The complete provider distribution
 fingerprint is
-`75bebbafe99d2ba65e5ce80bc44e644b5d073b7045d5058cbb0fb1f4c539a8f6`.
+`89f76b9ab63515ecccf46c642676ac5d3c6b4e53bfc642d1dacb69818e3e8588`.
 
 Live provider-agent endpoint discovery and registration are unavailable until
 the canonical core-control services reach content freeze. The compiled

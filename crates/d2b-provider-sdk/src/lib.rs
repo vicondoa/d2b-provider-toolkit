@@ -34,11 +34,11 @@ pub mod session {
 }
 
 /// Full canonical d2b source revision packaged by this distribution.
-pub const CANONICAL_D2B_REVISION: &str = "7e94327951d30913a1a6e0e7a47d4a24b462deff";
+pub const CANONICAL_D2B_REVISION: &str = "4018d9c9652bd826c2e6a9abccdcdcafb832d944";
 
 /// Fingerprint of the canonical provider toolkit distribution source set.
 pub const CANONICAL_SOURCE_FINGERPRINT: &str =
-    "75bebbafe99d2ba65e5ce80bc44e644b5d073b7045d5058cbb0fb1f4c539a8f6";
+    "89f76b9ab63515ecccf46c642676ac5d3c6b4e53bfc642d1dacb69818e3e8588";
 
 #[cfg(test)]
 mod tests {

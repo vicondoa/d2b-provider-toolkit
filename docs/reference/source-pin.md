@@ -4,8 +4,8 @@ The provider distribution has two immutable provenance points:
 
 | Purpose | Revision |
 | --- | --- |
-| Canonical d2b source | `7e94327951d30913a1a6e0e7a47d4a24b462deff` |
-| Source inventory and public contract artifacts | `d5a913922eb019ed83a16e4e64f562303b31ecf7` |
+| Canonical d2b source | `4018d9c9652bd826c2e6a9abccdcdcafb832d944` |
+| Source inventory and public contract artifacts | `c645a769f50b8283c1eddeb12f2a9bf0a1f397bd` |
 
 The inventory confirms that the selected canonical code groups are
 byte-identical at the source revision. Public contract artifacts are retained
@@ -14,7 +14,7 @@ domain-separated inventory produce:
 
 ```text
 d2b-provider-toolkit
-75bebbafe99d2ba65e5ce80bc44e644b5d073b7045d5058cbb0fb1f4c539a8f6
+89f76b9ab63515ecccf46c642676ac5d3c6b4e53bfc642d1dacb69818e3e8588
 ```
 
 `pins/d2b-provider-source.json` records both revisions, the inventory snapshot
