@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     assert_eq!(
         bootstrap_provider_agent().await,
-        Err(ProviderAgentBootstrapUnavailable::CoreControlServicesNotFrozen)
+        Err(ProviderAgentBootstrapUnavailable::RuntimeIntegrationUnavailable)
     );
     assert_eq!(sdk.call_count(), 0);
     println!("fake Azure SDK example passed without cloud or bootstrap work");

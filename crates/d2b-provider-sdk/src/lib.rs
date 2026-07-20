@@ -14,7 +14,7 @@ pub use d2b_provider as runtime;
 /// Canonical provider-agent adapters, fixtures, values, and conformance checks.
 pub use d2b_provider_toolkit as toolkit;
 
-/// Canonical serialized contracts enabled through `d2b-contracts/v2-provider`.
+/// Canonical serialized contracts enabled through `d2b-contracts/v2-services`.
 pub mod contracts {
     /// Component-session values referenced by provider placement and services.
     pub use d2b_contracts::v2_component_session as component_session;

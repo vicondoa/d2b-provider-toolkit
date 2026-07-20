@@ -1,8 +1,8 @@
 //! Closed provider-agent bootstrap seam.
 //!
-//! Endpoint acquisition and registration remain unavailable until the d2b
-//! core-control services reach content freeze. This module cannot manufacture a
-//! successful endpoint and performs no I/O.
+//! Endpoint acquisition and registration remain unavailable until canonical
+//! runtime composition lands in a pinned d2b release. This module cannot
+//! manufacture a successful endpoint and performs no I/O.
 
 use std::{convert::Infallible, error::Error, fmt};
 
@@ -10,14 +10,14 @@ use std::{convert::Infallible, error::Error, fmt};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ProviderAgentBootstrapUnavailable {
-    /// The owning core-control endpoint and registration API is not frozen.
-    CoreControlServicesNotFrozen,
+    /// Canonical runtime composition is absent from the pinned source release.
+    RuntimeIntegrationUnavailable,
 }
 
 impl fmt::Display for ProviderAgentBootstrapUnavailable {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(
-            "provider-agent bootstrap is unavailable until core-control services are frozen",
+            "provider-agent bootstrap is unavailable until canonical runtime integration lands",
         )
     }
 }
@@ -27,10 +27,10 @@ impl Error for ProviderAgentBootstrapUnavailable {}
 /// Returns the explicit unavailable state without performing discovery or I/O.
 ///
 /// `Infallible` makes a fabricated success value impossible. A later
-/// distribution may replace this seam only after the canonical core-control
-/// service contract is content-frozen.
+/// distribution may replace this seam only when the canonical runtime owns
+/// endpoint acquisition and registration in a pinned release.
 pub async fn bootstrap_provider_agent() -> Result<Infallible, ProviderAgentBootstrapUnavailable> {
-    Err(ProviderAgentBootstrapUnavailable::CoreControlServicesNotFrozen)
+    Err(ProviderAgentBootstrapUnavailable::RuntimeIntegrationUnavailable)
 }
 
 #[cfg(test)]
@@ -41,7 +41,7 @@ mod tests {
     async fn bootstrap_is_closed() {
         assert_eq!(
             bootstrap_provider_agent().await,
-            Err(ProviderAgentBootstrapUnavailable::CoreControlServicesNotFrozen)
+            Err(ProviderAgentBootstrapUnavailable::RuntimeIntegrationUnavailable)
         );
     }
 }

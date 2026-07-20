@@ -12,7 +12,7 @@ publish = false
 default = []
 
 [dependencies]
-d2b-contracts = { workspace = true, features = ["v2-provider"] }
+d2b-contracts.workspace = true
 d2b-provider.workspace = true
 d2b-provider-toolkit.workspace = true
 d2b-session.workspace = true

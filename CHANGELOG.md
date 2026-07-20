@@ -16,8 +16,19 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - Provider authoring, redaction, authority, placement, lease, bootstrap, and
   source-drift documentation.
 
+### Changed
+
+- The provider template now accepts explicit asynchronous substrate effect
+  ports while retaining fail-closed read-only behavior by default.
+
 ### Fixed
 
+- The SDK now selects the canonical provider distribution's exact
+  `d2b-contracts/v2-services` feature profile, and policy checks cover canonical
+  dependency features, Git-listed package files, Cargo targets, copied wire
+  code, and ambient authority.
+- Provider-agent bootstrap now reports the actual integrated-runtime blocker
+  instead of the completed control-service content freeze.
 - Source verification now consumes the package-complete canonical inventory,
   pins the landed d2b revision, and rejects every unlisted file
   below a selected Cargo package root.

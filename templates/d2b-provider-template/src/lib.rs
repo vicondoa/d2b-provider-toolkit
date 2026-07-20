@@ -44,10 +44,39 @@ impl fmt::Display for TemplateError {
 
 impl Error for TemplateError {}
 
-/// Read-only substrate provider scaffold.
+/// Explicit asynchronous authority for substrate effects.
+///
+/// Implementations receive only canonical operation values. They must acquire
+/// credentials, broker capabilities, paths, and other authority from their
+/// composition owner rather than ambient process state.
+pub trait SubstrateEffects: Send + Sync {
+    /// Observe substrate state without applying a mutation.
+    fn check<'a>(
+        &'a self,
+        context: &'a ProviderCallContext<'a>,
+        request: &'a ProviderOperationRequest,
+    ) -> ProviderFuture<'a, ProviderObservation>;
+
+    /// Plan a substrate remediation without applying it.
+    fn plan_remediation<'a>(
+        &'a self,
+        context: &'a ProviderCallContext<'a>,
+        request: &'a ProviderOperationRequest,
+    ) -> ProviderFuture<'a, ProviderPlan>;
+
+    /// Apply a previously authorized canonical remediation plan.
+    fn apply<'a>(
+        &'a self,
+        context: &'a ProviderCallContext<'a>,
+        request: &'a ProviderPlan,
+    ) -> ProviderFuture<'a, MutationReceipt>;
+}
+
+/// Substrate provider scaffold, read-only unless effects are supplied.
 pub struct InspectOnlySubstrate {
     descriptor: ProviderDescriptor,
     clock: Arc<dyn ProviderClock>,
+    effects: Option<Arc<dyn SubstrateEffects>>,
 }
 
 impl fmt::Debug for InspectOnlySubstrate {
@@ -80,7 +109,26 @@ impl InspectOnlySubstrate {
         if descriptor.capabilities != expected {
             return Err(TemplateError::CapabilityMismatch);
         }
-        Ok(Self { descriptor, clock })
+        Ok(Self {
+            descriptor,
+            clock,
+            effects: None,
+        })
+    }
+
+    /// Build the scaffold with explicitly supplied asynchronous effects.
+    ///
+    /// Supplying a port does not make the provider production-ready; the caller
+    /// still owns durable idempotency, cancellation, deadline, and ambiguity
+    /// behavior plus focused conformance tests.
+    pub fn with_effects(
+        descriptor: ProviderDescriptor,
+        clock: Arc<dyn ProviderClock>,
+        effects: Arc<dyn SubstrateEffects>,
+    ) -> Result<Self, TemplateError> {
+        let mut provider = Self::new(descriptor, clock)?;
+        provider.effects = Some(effects);
+        Ok(provider)
     }
 
     /// Wrap the scaffold as the canonical runtime instance type.
@@ -167,8 +215,11 @@ impl SubstrateProvider for InspectOnlySubstrate {
     fn check<'a>(
         &'a self,
         context: &'a ProviderCallContext<'a>,
-        _request: &'a ProviderOperationRequest,
+        request: &'a ProviderOperationRequest,
     ) -> ProviderFuture<'a, ProviderObservation> {
+        if let Some(effects) = &self.effects {
+            return effects.check(context, request);
+        }
         let result = self
             .values()
             .and_then(|values| {
@@ -197,30 +248,97 @@ impl SubstrateProvider for InspectOnlySubstrate {
     fn plan_remediation<'a>(
         &'a self,
         context: &'a ProviderCallContext<'a>,
-        _request: &'a ProviderOperationRequest,
+        request: &'a ProviderOperationRequest,
     ) -> ProviderFuture<'a, ProviderPlan> {
-        self.unavailable(context)
+        match &self.effects {
+            Some(effects) => effects.plan_remediation(context, request),
+            None => self.unavailable(context),
+        }
     }
 
     fn apply<'a>(
         &'a self,
         context: &'a ProviderCallContext<'a>,
-        _request: &'a ProviderPlan,
+        request: &'a ProviderPlan,
     ) -> ProviderFuture<'a, MutationReceipt> {
-        self.unavailable(context)
+        match &self.effects {
+            Some(effects) => effects.apply(context, request),
+            None => self.unavailable(context),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
 
     use d2b_provider_sdk::{
-        contracts::{identity::ProviderType, provider::ImplementationId},
+        contracts::{
+            identity::ProviderType,
+            provider::{
+                ImplementationId, MutationReceipt, ProviderCallContext, ProviderFailure,
+                ProviderFailureKind, ProviderFuture, ProviderHealthReason, ProviderMethod,
+                ProviderObservation, ProviderOperationRequest, ProviderPlan, ProviderRemediation,
+                RetryClass, SubstrateProvider,
+            },
+        },
         toolkit::{DeterministicClock, Fixture, check_provider_conformance},
     };
 
-    use super::InspectOnlySubstrate;
+    use super::{InspectOnlySubstrate, SubstrateEffects};
+
+    struct RecordingEffects {
+        calls: Arc<AtomicUsize>,
+        now_unix_ms: u64,
+    }
+
+    impl RecordingEffects {
+        fn unavailable(&self, context: &ProviderCallContext<'_>) -> ProviderFailure {
+            ProviderFailure {
+                kind: ProviderFailureKind::Unavailable,
+                retry: RetryClass::Never,
+                provider_type: ProviderType::Substrate,
+                binding: context.operation.binding(),
+                correlation_id: context.operation.correlation_id.clone(),
+                occurred_at_unix_ms: self.now_unix_ms,
+                reason: ProviderHealthReason::ProviderDegraded,
+                remediation: ProviderRemediation::RetryBounded,
+            }
+        }
+    }
+
+    impl SubstrateEffects for RecordingEffects {
+        fn check<'a>(
+            &'a self,
+            context: &'a ProviderCallContext<'a>,
+            _request: &'a ProviderOperationRequest,
+        ) -> ProviderFuture<'a, ProviderObservation> {
+            self.calls.fetch_add(1, Ordering::AcqRel);
+            let failure = self.unavailable(context);
+            Box::pin(async move { Err(failure) })
+        }
+
+        fn plan_remediation<'a>(
+            &'a self,
+            context: &'a ProviderCallContext<'a>,
+            _request: &'a ProviderOperationRequest,
+        ) -> ProviderFuture<'a, ProviderPlan> {
+            self.calls.fetch_add(1, Ordering::AcqRel);
+            let failure = self.unavailable(context);
+            Box::pin(async move { Err(failure) })
+        }
+
+        fn apply<'a>(
+            &'a self,
+            _context: &'a ProviderCallContext<'a>,
+            _request: &'a ProviderPlan,
+        ) -> ProviderFuture<'a, MutationReceipt> {
+            Box::pin(async { panic!("apply is not exercised by this port test") })
+        }
+    }
 
     #[tokio::test]
     async fn template_passes_canonical_read_only_conformance() {
@@ -237,5 +355,54 @@ mod tests {
         check_provider_conformance(&provider, &fixture)
             .await
             .expect("template conformance");
+    }
+
+    #[tokio::test]
+    async fn effect_authority_is_injected_through_the_async_port() {
+        let mut fixture = Fixture::new(ProviderType::Substrate, 0).expect("canonical fixture");
+        fixture.descriptor.implementation_id =
+            ImplementationId::parse("substrate-template").expect("static implementation id");
+        let clock = Arc::new(DeterministicClock::new(fixture.now_unix_ms));
+        let calls = Arc::new(AtomicUsize::new(0));
+        let provider = InspectOnlySubstrate::with_effects(
+            fixture.descriptor.clone(),
+            clock,
+            Arc::new(RecordingEffects {
+                calls: Arc::clone(&calls),
+                now_unix_ms: fixture.now_unix_ms,
+            }),
+        )
+        .expect("valid template descriptor");
+        let check_operation = fixture
+            .operation(ProviderMethod::SubstrateCheck)
+            .expect("canonical operation");
+        let check_context = fixture.call_context(&check_operation);
+        let check_request = fixture
+            .request(ProviderMethod::SubstrateCheck)
+            .expect("canonical request");
+        assert!(matches!(
+            SubstrateProvider::check(&provider, &check_context, &check_request).await,
+            Err(ProviderFailure {
+                kind: ProviderFailureKind::Unavailable,
+                ..
+            })
+        ));
+
+        let operation = fixture
+            .operation(ProviderMethod::SubstratePlanRemediation)
+            .expect("canonical operation");
+        let context = fixture.call_context(&operation);
+        let request = fixture
+            .request(ProviderMethod::SubstratePlanRemediation)
+            .expect("canonical request");
+
+        assert!(matches!(
+            SubstrateProvider::plan_remediation(&provider, &context, &request).await,
+            Err(ProviderFailure {
+                kind: ProviderFailureKind::Unavailable,
+                ..
+            })
+        ));
+        assert_eq!(calls.load(Ordering::Acquire), 2);
     }
 }

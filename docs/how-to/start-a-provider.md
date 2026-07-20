@@ -51,6 +51,12 @@ observation; it must not be converted to success.
 Use `ProviderValues` to build health, plans, handles, observations, receipts,
 and failures. Do not define local equivalents.
 
+Implement external observation and mutation through `SubstrateEffects` or an
+equivalent axis-specific asynchronous port over canonical values. Inject that
+port from the composition owner. Do not open a broker socket, derive a host
+path, read a credential from the environment, or discover transport authority
+inside the provider.
+
 ## 4. Add conformance
 
 Build a `ProviderInstance` from the real implementation and a canonical
@@ -73,11 +79,13 @@ async fn provider_conforms() {
 Run the provider test and the distribution checks described in
 [Conformance](../reference/conformance.md).
 
-## 5. Keep bootstrap closed
+## 5. Keep runtime bootstrap closed
 
 Do not discover a daemon socket, invent an endpoint, self-register, or report a
-successful provider-agent bootstrap. The owning core-control contract is not
-content-frozen. See [Provider-agent bootstrap](../explanation/provider-agent-bootstrap.md).
+successful provider-agent bootstrap. The service APIs are frozen, but the
+pinned canonical distribution does not yet contain integrated runtime ownership
+for endpoint acquisition and registration. See
+[Provider-agent bootstrap](../explanation/provider-agent-bootstrap.md).
 
 ## 6. Keep cloud examples fake
 

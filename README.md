@@ -11,8 +11,9 @@ The SDK is pinned to canonical `vicondoa/d2b` revision
 fingerprint is
 `89f76b9ab63515ecccf46c642676ac5d3c6b4e53bfc642d1dacb69818e3e8588`.
 
-Live provider-agent endpoint discovery and registration are unavailable until
-the canonical core-control services reach content freeze. The compiled
+The canonical control and edge service APIs are content-frozen, but live
+provider-agent endpoint acquisition and registration still depend on integrated
+runtime composition that is absent from the pinned release. The compiled
 bootstrap seam returns an explicit unavailable error and cannot report fake
 success.
 
@@ -22,7 +23,7 @@ Azure SDK, credential, or live network dependency.
 ## What is distributed
 
 - `d2b-provider-sdk`: a narrow facade over canonical `d2b-provider-toolkit`,
-  `d2b-provider`, `d2b-contracts/v2-provider`, and required session driver
+  `d2b-provider`, `d2b-contracts/v2-services`, and required session driver
   types;
 - `d2b-provider-conformance`: the exact distribution self-test entrypoint;
 - `d2b-provider-source`: file, source-group, revision, and distribution drift
@@ -36,6 +37,11 @@ There are no copied wire DTOs, protobuf definitions, identifier types, frame
 codecs, redaction implementations, or fake-provider internals. The canonical
 crates remain `publish = false`; this distribution is delivered through GitHub
 release source artifacts and flake/path dependencies only.
+
+Provider templates expose asynchronous observation and mutation effect ports
+over canonical types. Composition owners inject all broker, credential, path,
+and transport authority; provider code does not discover it from ambient
+process state.
 
 Release binaries are not standalone Linux executables: their ELF interpreter
 and shared-library search paths are in `/nix/store`. The binary release asset is
@@ -91,7 +97,7 @@ See:
 - [Release artifacts](docs/reference/release-artifacts.md)
 - [Authority, placement, and leases](docs/explanation/authority-placement-and-leases.md)
 - [Redaction boundary](docs/explanation/redaction-boundary.md)
-- [Deferred bootstrap](docs/explanation/provider-agent-bootstrap.md)
+- [Fail-closed bootstrap](docs/explanation/provider-agent-bootstrap.md)
 
 ## License
 

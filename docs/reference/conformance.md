@@ -50,9 +50,11 @@ cargo test -p d2b-provider-template \
 cargo run --quiet -p d2b-provider-source -- verify
 ```
 
-This validates 141 canonical files, each file digest, six source-group
+This validates 157 canonical files, each file digest, six source-group
 fingerprints, the checked-out Git revision when metadata is available, the
 inventory snapshot digest, and the complete provider distribution fingerprint.
+`scripts/check-distribution-policy.sh` independently compares the inventory with
+every Git-listed package file and Cargo metadata target.
 
 CI runs all three entrypoints plus formatting, Clippy, workspace tests, the
 zero-work Azure example, and `nix flake check`.

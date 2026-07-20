@@ -17,7 +17,7 @@ license = "Apache-2.0"
 repository = "https://github.com/vicondoa/d2b-provider-toolkit"
 
 [workspace.dependencies]
-d2b-contracts = { path = "canonical/d2b/packages/d2b-contracts", version = "2.0.0", default-features = false }
+d2b-contracts = { path = "canonical/d2b/packages/d2b-contracts", version = "2.0.0", default-features = false, features = ["v2-services"] }
 d2b-provider = { path = "canonical/d2b/packages/d2b-provider", version = "2.0.0", default-features = false }
 d2b-provider-sdk = { path = "crates/d2b-provider-sdk", version = "0.1.0", default-features = false }
 d2b-provider-toolkit = { path = "canonical/d2b/packages/d2b-provider-toolkit", version = "2.0.0", default-features = false }

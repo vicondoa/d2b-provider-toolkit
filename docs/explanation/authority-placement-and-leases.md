@@ -31,6 +31,11 @@ Provider ID, provider generation, placement generation, endpoint role, and
 service package must agree before serving. Do not infer placement from an
 endpoint path, peer address, display name, cloud tenant, or relay identity.
 
+External effects are asynchronous injected ports over canonical values.
+Provider code receives broker, credential, path, and transport capabilities
+from its composition owner; ambient filesystem paths, environment variables,
+well-known sockets, and process-global clients are not authority.
+
 ## Handles and ownership
 
 Provider handles are opaque, typed, generation-bound evidence. They preserve
