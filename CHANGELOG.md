@@ -19,6 +19,12 @@ and this project follows [Semantic Versioning](https://semver.org/).
   `cargo clippy -D warnings` checks built from the same distribution source
   tree as the packaged toolkit, so formatting and lint regressions are caught
   without a local checkout.
+- `nix flake check` now includes a hermetic `checks.policy` derivation that
+  runs `tests/check-distribution-policy.sh` against a throwaway git-tracked
+  copy of the distribution source tree, so the distribution-policy
+  regression test is exercised by required CI (via the existing `nix` job)
+  instead of only being reachable through the local-only `make policy-test`
+  target.
 
 ### Changed
 

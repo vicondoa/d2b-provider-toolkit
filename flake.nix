@@ -156,6 +156,42 @@
             '';
             doCheck = false;
           };
+          # Hermetically exercises tests/check-distribution-policy.sh (which
+          # is otherwise only run ad hoc via `make policy-test`, and was not
+          # wired into any required CI/flake check). The regression test's
+          # fixture builder walks `git ls-files`, mirroring how a real
+          # checkout treats `canonical/d2b` as an (excluded) submodule
+          # gitlink; distributionSource has no `.git` at all, so a throwaway
+          # commit is made around a writable copy of it here purely so the
+          # test's existing git-based fixture logic runs unmodified in both
+          # a real checkout and this hermetic sandbox.
+          policyCheck = pkgs.runCommand "d2b-provider-toolkit-policy-check" {
+            nativeBuildInputs = [
+              pkgs.bash
+              pkgs.cargo
+              pkgs.coreutils
+              pkgs.findutils
+              pkgs.git
+              pkgs.gnugrep
+              pkgs.gnused
+              pkgs.gnutar
+              pkgs.jq
+              pkgs.rustc
+            ];
+          } ''
+            cp -R ${distributionSource}/. candidate
+            chmod -R u+w candidate
+            git -C candidate init -q
+            echo "/canonical/d2b/" >> candidate/.git/info/exclude
+            git -C candidate add -A
+            git -C candidate \
+              -c user.email="checks.policy@d2b-provider-toolkit.invalid" \
+              -c user.name="d2b-provider-toolkit checks.policy" \
+              commit -q -m "candidate snapshot for checks.policy"
+            HOME="$TMPDIR" CARGO_NET_OFFLINE=true \
+              bash candidate/tests/check-distribution-policy.sh
+            touch "$out"
+          '';
         in
         {
           default = toolkit;
@@ -165,6 +201,7 @@
           releasePackagingCheck = releasePackagingCheck;
           fmtCheck = fmtCheck;
           clippyCheck = clippyCheck;
+          policyCheck = policyCheck;
         }
       );
 
@@ -180,6 +217,7 @@
           release-packaging = packages.releasePackagingCheck;
           fmt = packages.fmtCheck;
           clippy = packages.clippyCheck;
+          policy = packages.policyCheck;
         }
       );
 
