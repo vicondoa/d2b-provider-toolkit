@@ -38,5 +38,8 @@ and this project follows [Semantic Versioning](https://semver.org/).
   imports from extraction paths containing URI delimiters or non-ASCII bytes.
 - Trusted Nix users are parsed without pathname expansion, including wildcard,
   group, and exact-user principals.
+- The distribution policy check's author-root scans now fail closed on a
+  missing/unreadable author root or any `grep` error (exit code >= 2) instead
+  of silently treating the error as "no match found".
 
 [Unreleased]: https://github.com/vicondoa/d2b-provider-toolkit/compare/v0.1.0...HEAD

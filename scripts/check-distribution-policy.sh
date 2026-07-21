@@ -60,21 +60,46 @@ author_roots=(
   templates/d2b-provider-template/examples
 )
 
-if grep -R -n -E --include='*.rs' \
-  'BROKER_SOCKET_PATH|/run/d2b|std::(fs|net|path)|PathBuf|Unix(Stream|Listener)|Tcp(Stream|Listener)|Command::new|env::(var|vars)' \
-  "${author_roots[@]}"
-then
-  echo "distribution policy: provider author surface uses ambient path or process authority" >&2
-  exit 1
-fi
+for author_root in "${author_roots[@]}"; do
+  if [[ ! -d "$author_root" || ! -r "$author_root" ]]; then
+    echo "distribution policy: author root missing or unreadable: $author_root" >&2
+    exit 1
+  fi
+done
 
-if grep -R -n -E --include='*.rs' \
+# grep exits 0 (match: policy violation), 1 (no match: ok), or >=2 (a real
+# error such as an unreadable file). Fail closed on >=2 instead of letting the
+# `if` swallow it as "no match".
+check_author_roots_pattern() {
+  local pattern="$1"
+  local violation_message="$2"
+  local output
+  local status=0
+  output="$(grep -R -n -E --include='*.rs' "$pattern" "${author_roots[@]}" 2>&1)" || status=$?
+  case "$status" in
+    0)
+      echo "distribution policy: $violation_message" >&2
+      echo "$output" >&2
+      exit 1
+      ;;
+    1)
+      return 0
+      ;;
+    *)
+      echo "distribution policy: author root scan failed (grep exit $status)" >&2
+      echo "$output" >&2
+      exit 1
+      ;;
+  esac
+}
+
+check_author_roots_pattern \
+  'BROKER_SOCKET_PATH|/run/d2b|std::(fs|net|path)|PathBuf|Unix(Stream|Listener)|Tcp(Stream|Listener)|Command::new|env::(var|vars)' \
+  'provider author surface uses ambient path or process authority'
+
+check_author_roots_pattern \
   'serde(::|_)|derive\([^)]*(Serialize|Deserialize)|prost::|protobuf::|ttrpc::' \
-  "${author_roots[@]}"
-then
-  echo "distribution policy: provider author surface contains a copied wire implementation" >&2
-  exit 1
-fi
+  'provider author surface contains a copied wire implementation'
 
 canonical_packages=(
   packages/d2b-contracts

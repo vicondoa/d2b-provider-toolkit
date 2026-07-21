@@ -1,6 +1,6 @@
-.PHONY: check clippy conformance flake fmt policy release-test source test
+.PHONY: check clippy conformance flake fmt policy policy-test release-test source test
 
-check: fmt clippy test policy source conformance release-test flake
+check: fmt clippy test policy policy-test source conformance release-test flake
 
 fmt:
 	cargo fmt --all -- --check
@@ -13,6 +13,9 @@ test:
 
 policy:
 	bash scripts/check-distribution-policy.sh
+
+policy-test:
+	bash tests/check-distribution-policy.sh
 
 source:
 	cargo run --quiet -p d2b-provider-source -- verify
