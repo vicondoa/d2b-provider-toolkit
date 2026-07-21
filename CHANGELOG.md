@@ -51,5 +51,13 @@ and this project follows [Semantic Versioning](https://semver.org/).
 - The distribution policy check's author-root scans now fail closed on a
   missing/unreadable author root or any `grep` error (exit code >= 2) instead
   of silently treating the error as "no match found".
+- The distribution-policy regression test's unreadable-root and
+  unreadable-file cases are now explicitly skipped (with a message that does
+  not claim coverage) when running as uid 0, since root bypasses the DAC
+  permission checks those cases rely on and previously made them
+  non-deterministic under a root test runner. The missing-root case is
+  unaffected (privilege-independent), and a new malformed-pattern case
+  deterministically exercises the `grep` exit-code >= 2 fail-closed path
+  under any uid, including root.
 
 [Unreleased]: https://github.com/vicondoa/d2b-provider-toolkit/compare/v0.1.0...HEAD
