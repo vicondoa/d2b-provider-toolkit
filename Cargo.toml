@@ -1,0 +1,39 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/d2b-provider-conformance",
+    "crates/d2b-provider-sdk",
+    "crates/d2b-provider-source",
+    "examples/d2b-provider-azure-fake",
+    "templates/d2b-provider-template",
+]
+exclude = ["canonical/d2b"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94.1"
+license = "Apache-2.0"
+repository = "https://github.com/vicondoa/d2b-provider-toolkit"
+
+[workspace.dependencies]
+d2b-contracts = { path = "canonical/d2b/packages/d2b-contracts", version = "2.0.0", default-features = false, features = ["v2-services"] }
+d2b-provider = { path = "canonical/d2b/packages/d2b-provider", version = "2.0.0", default-features = false }
+d2b-provider-sdk = { path = "crates/d2b-provider-sdk", version = "0.1.0", default-features = false }
+d2b-provider-toolkit = { path = "canonical/d2b/packages/d2b-provider-toolkit", version = "2.0.0", default-features = false }
+d2b-session = { path = "canonical/d2b/packages/d2b-session", version = "2.0.0", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tokio = { version = "1", default-features = false }
+
+[workspace.lints.clippy]
+all = "warn"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+strip = "symbols"
