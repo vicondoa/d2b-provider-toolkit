@@ -15,6 +15,10 @@ and this project follows [Semantic Versioning](https://semver.org/).
   automation.
 - Provider authoring, redaction, authority, placement, lease, bootstrap, and
   source-drift documentation.
+- `nix flake check` now includes hermetic `cargo fmt --check` and
+  `cargo clippy -D warnings` checks built from the same distribution source
+  tree as the packaged toolkit, so formatting and lint regressions are caught
+  without a local checkout.
 
 ### Changed
 

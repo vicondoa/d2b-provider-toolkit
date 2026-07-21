@@ -119,6 +119,43 @@
             done
             touch "$out"
           '';
+          # Hermetic format/lint gates. These reuse the same distributionSource
+          # tree and pinned rustPlatform toolchain as the `toolkit` package
+          # (no ambient `canonical/d2b` submodule checkout, no network) so
+          # `nix flake check` covers `cargo fmt`/`cargo clippy` the same way
+          # `make check`'s `fmt`/`clippy` targets do for a local checkout.
+          fmtCheck = pkgs.rustPlatform.buildRustPackage {
+            pname = "d2b-provider-toolkit-fmt-check";
+            version = "0.1.0";
+            src = distributionSource;
+            cargoLock.lockFile = ./Cargo.lock;
+            nativeBuildInputs = [ pkgs.rustfmt ];
+            buildPhase = ''
+              runHook preBuild
+              CARGO_NET_OFFLINE=true cargo fmt --all -- --check
+              runHook postBuild
+            '';
+            installPhase = ''
+              touch "$out"
+            '';
+            doCheck = false;
+          };
+          clippyCheck = pkgs.rustPlatform.buildRustPackage {
+            pname = "d2b-provider-toolkit-clippy-check";
+            version = "0.1.0";
+            src = distributionSource;
+            cargoLock.lockFile = ./Cargo.lock;
+            nativeBuildInputs = [ pkgs.clippy ];
+            buildPhase = ''
+              runHook preBuild
+              cargo clippy --offline --workspace --all-targets --all-features -- -D warnings
+              runHook postBuild
+            '';
+            installPhase = ''
+              touch "$out"
+            '';
+            doCheck = false;
+          };
         in
         {
           default = toolkit;
@@ -126,6 +163,8 @@
           sourceArchive = sourceArchive;
           contractDocs = contractDocs;
           releasePackagingCheck = releasePackagingCheck;
+          fmtCheck = fmtCheck;
+          clippyCheck = clippyCheck;
         }
       );
 
@@ -139,6 +178,8 @@
           source-archive = packages.sourceArchive;
           contract-docs = packages.contractDocs;
           release-packaging = packages.releasePackagingCheck;
+          fmt = packages.fmtCheck;
+          clippy = packages.clippyCheck;
         }
       );
 
