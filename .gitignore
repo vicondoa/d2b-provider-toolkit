@@ -1,7 +1,0 @@
-/result
-/result-source
-/result-toolkit
-/dist
-/.release-*
-/target
-**/*.rs.bk
